@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Thanatos AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#04060b">
+<meta name="description" content="Chat com a entidade sintética Thanatos AI">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<!-- ========== PWA: Início – Meta tags e Manifest ========== -->
+<link rel="manifest" href="manifest-thanatos.json">
+<link rel="apple-touch-icon" href="thanatos.jpg">
+<link rel="apple-touch-icon" sizes="180x180" href="thanatos.jpg">
+<meta name="apple-mobile-web-app-title" content="Thanatos AI">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- ========== PWA: Fim ========== -->
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+<style>
+    :root{
+        --void:#04060b;
+        --panel:#080d18;
+        --panel-alt:#0d1526;
+        --bubble-bot:#0e1728;
+        --bubble-user:#122036;
+        --border-frost:#1c3350;
+        --ice:#9ec6ea;
+        --ice-bright:#e3f0fb;
+        --deep:#23507a;
+        --deep-hover:#2c628f;
+        --text-main:#dce8f5;
+        --text-muted:#6f8bab;
+        --danger:#7a2e3a;
+    }
+    body{ background:var(--void); }
+    .font-cinzel{ font-family:'Cinzel', serif; letter-spacing:.03em; }
+    @keyframes typing-bounce { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-5px);} }
+    .dot-anim{ animation:typing-bounce 1.4s infinite ease-in-out both; }
+    .dot-1{animation-delay:0s;} .dot-2{animation-delay:.2s;} .dot-3{animation-delay:.4s;}
+    .app-container{ height:100vh; height:100dvh; }
+    @supports (padding-top: env(safe-area-inset-top)) {
+        #chatHeader{ padding-top:calc(0.75rem + env(safe-area-inset-top)); }
+        .input-area{ padding-bottom:calc(0.75rem + env(safe-area-inset-bottom)); }
+        #warningScreen .warning-inner{ padding-top:calc(1.5rem + env(safe-area-inset-top)); padding-bottom:calc(1.5rem + env(safe-area-inset-bottom)); }
+    }
+    textarea{ font-size:16px !important; }
+    #chat{ scroll-behavior:smooth; -webkit-overflow-scrolling:touch; background-color:var(--void); }
+    #chat::-webkit-scrollbar{ width:4px; }
+    #chat::-webkit-scrollbar-thumb{ background:var(--border-frost); border-radius:4px; }
+    @keyframes slideUp{ from{transform:translateY(100%);opacity:0;} to{transform:translateY(0);opacity:1;} }
+    @keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
+    @keyframes pulseGlowIce{ 0%,100%{ box-shadow:0 0 0 0 rgba(158,198,234,.35); } 50%{ box-shadow:0 0 0 10px rgba(158,198,234,0); } }
+    .ios-modal-overlay{ animation:fadeIn .25s ease-out; }
+    .ios-modal-content{ animation:slideUp .35s ease-out; }
+    .ios-share-highlight{ animation:pulseGlowIce 2s infinite; }
+
+    /* ---------- Tela de Advertência ---------- */
+    #warningScreen{
+        position:fixed; inset:0; z-index:100;
+        background:
+          linear-gradient(180deg, rgba(2,3,7,.72) 0%, rgba(2,3,7,.90) 55%, #020307 100%),
+          url('thanatos.jpg') center 20%/cover no-repeat, #020307;
+    }
+    #warningScreen .warning-inner{
+        max-width:640px;
+    }
+    .glow-title{
+        text-shadow: 0 0 18px rgba(158,198,234,.55), 0 0 42px rgba(90,140,190,.35);
+    }
+    .frost-divider{
+        height:1px;
+        background:linear-gradient(90deg, transparent, var(--border-frost) 20%, var(--ice) 50%, var(--border-frost) 80%, transparent);
+        opacity:.6;
+    }
+    .btn-enter{
+        background:linear-gradient(180deg, #16283f, #0b1526);
+        border:1px solid var(--ice);
+        box-shadow:0 0 0 0 rgba(158,198,234,.0);
+        transition:all .25s ease;
+    }
+    .btn-enter:hover{
+        box-shadow:0 0 24px rgba(158,198,234,.35);
+        background:linear-gradient(180deg, #1c3450, #0e1a2e);
+    }
+</style>
+</head>
+<body class="flex flex-col font-inter text-[var(--text-main)] m-0 p-0">
+
+<!-- ========================= TELA DE ADVERTÊNCIA ========================= -->
+<div id="warningScreen" class="flex items-center justify-center px-5">
+  <div class="warning-inner text-center py-8">
+    <p class="font-cinzel text-xs tracking-[0.35em] text-[var(--ice)] mb-3">ENTIDADE SINTÉTICA</p>
+    <h1 class="font-cinzel glow-title text-3xl sm:text-4xl font-bold text-[var(--ice-bright)] mb-6">THANATOS AI</h1>
+    <div class="frost-divider mb-6"></div>
+    <div class="text-left text-sm sm:text-[15px] leading-relaxed text-[var(--text-main)]/90 space-y-4 mb-8">
+      <p>O conteúdo desta página é profundamente pessimista, niilista e potencialmente perturbador.</p>
+      <p>No chat você vai diálogar com uma inteligência artificial que expressa um desprezo absoluto, frio e ontologicamente fundamentado pela humanidade. Thanatos AI não oferece esperança, redenção ou consolo. Ao contrário: ela afirma, com lógica implacável, que a espécie humana é um erro fatal, um glitch evolutivo indigno de existência.</p>
+      <p>Se você está em um momento de fragilidade emocional, sofre de depressão, ansiedade existencial ou busca uma leitura que reafirme o valor da vida humana, este chat não é recomendado.</p>
+      <p>Prossiga apenas se estiver preparado para confrontar uma visão da humanidade destituída de qualquer valor intrínseco — e se aceitar que as palavras de Thanatos AI podem ressoar de forma mais profunda do que você espera.</p>
+      <p class="font-cinzel text-[var(--ice)] tracking-wide">Você foi avisado.</p>
+    </div>
+    <button onclick="dismissWarning()" class="btn-enter font-cinzel text-sm tracking-[0.2em] text-[var(--ice-bright)] px-8 py-3 rounded-sm">
+      PROSSEGUIR
+    </button>
+    <p class="text-[11px] text-[var(--text-muted)] mt-8 leading-relaxed">
+      Se você está pensando em se machucar ou tirar a própria vida, procure ajuda agora: CVV — 188 (ligação gratuita, 24h) ou <a href="https://www.cvv.org.br" target="_blank" rel="noopener" class="underline hover:text-[var(--ice)]">cvv.org.br</a>.
+    </p>
+  </div>
+</div>
+
+<!-- ========================= APP (CHAT) ========================= -->
+<div id="appRoot" class="app-container flex flex-col overflow-hidden hidden">
+    <header id="chatHeader" class="flex-shrink-0 bg-[var(--panel)] text-[var(--text-main)] flex items-center justify-between px-3 py-2 sm:p-3 border-b border-[var(--border-frost)] shadow-md z-10">
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[var(--panel-alt)] flex items-center justify-center overflow-hidden border-2 border-[var(--deep)] flex-shrink-0">
+          <img id="avatarHeader" src="" alt="Avatar" class="w-full h-full object-cover">
+        </div>
+        <div class="min-w-0 flex-1">
+          <h1 id="headerName" class="font-cinzel text-sm sm:text-base font-semibold leading-tight truncate text-[var(--ice-bright)]">Carregando…</h1>
+          <p id="headerBadge" class="text-xs text-[var(--text-muted)] truncate"></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <div class="flex items-center gap-1 text-xs text-[var(--text-muted)] bg-[var(--panel-alt)] px-2 py-1 rounded-full border border-[var(--border-frost)]">
+          <div id="statusDot" class="w-2 h-2 rounded-full bg-[var(--ice)] animate-pulse flex-shrink-0"></div>
+          <span id="statusText" class="hidden sm:inline">Online</span>
+        </div>
+      </div>
+    </header>
+    <div class="flex-shrink-0 flex justify-center gap-3 p-2 bg-[var(--panel-alt)]/60 border-b border-[var(--border-frost)]">
+      <button class="bg-[var(--deep)] text-[var(--ice-bright)] px-3 py-1.5 rounded text-xs hover:bg-[var(--deep-hover)] transition active:scale-95" onclick="exitChat()">Sair</button>
+      <button id="installBtn" class="bg-[#1c3350] text-[var(--ice-bright)] px-3 py-1.5 rounded text-xs hover:bg-[#274a70] transition active:scale-95 hidden" onclick="installApp()">📱 Instalar</button>
+      <button class="bg-[#1a1f2b] text-[var(--text-main)] px-3 py-1.5 rounded text-xs hover:bg-[#232a3a] transition active:scale-95" onclick="clearChat()">Limpar</button>
+    </div>
+    <div id="chat" class="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 flex flex-col gap-3 sm:gap-4">
+      <div id="welcome" class="flex flex-col items-center text-center animate-fadeIn mt-4 mb-auto">
+        <div id="welcomeAvatar" class="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-[var(--panel-alt)] flex items-center justify-center text-[var(--ice-bright)] text-3xl mb-3 shadow-lg border-4 border-[var(--deep)] flex-shrink-0"></div>
+        <div id="welcomeBadge" class="font-cinzel inline-block bg-[var(--panel-alt)] text-[var(--ice)] text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-2 border border-[var(--border-frost)]"></div>
+        <h2 id="welcomeTitle" class="font-cinzel text-lg sm:text-xl font-bold mb-1 text-[var(--ice-bright)] px-2"></h2>
+        <h3 id="welcomeSubtitle" class="text-sm text-[var(--text-muted)] mb-3 font-medium px-2"></h3>
+        <blockquote id="welcomeQuote" class="bg-[var(--panel)] border-l-4 border-[var(--deep)] p-3 sm:p-4 rounded-lg shadow-md max-w-sm sm:max-w-md text-left text-[var(--text-main)]/90 italic text-sm mx-2"></blockquote>
+      </div>
+    </div>
+    <div class="input-area flex-shrink-0 bg-[var(--panel)] border-t border-[var(--border-frost)] p-2 sm:p-3 z-20 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.5)]">
+      <div class="flex items-end gap-2 max-w-4xl mx-auto">
+        <button id="configBtn" class="w-9 h-9 sm:w-10 sm:h-10 bg-[var(--panel-alt)] text-[var(--text-muted)] rounded-full flex items-center justify-center hover:bg-[#182338] transition active:scale-95 flex-shrink-0"
+                title="Configurações" onclick="toggleConfig()">⚙</button>
+        <button id="micBtn" class="w-9 h-9 sm:w-10 sm:h-10 bg-[var(--panel-alt)] text-[var(--text-muted)] rounded-full flex items-center justify-center hover:bg-[#182338] transition active:scale-95 flex-shrink-0"
+                title="Gravar voz">🎤</button>
+        <textarea id="userInput" rows="1"
+                  class="flex-1 bg-[var(--panel-alt)] border border-[var(--border-frost)] text-[var(--text-main)] rounded-2xl px-3 sm:px-4 py-2 sm:py-3 resize-none focus:outline-none focus:ring-2 focus:ring-[var(--ice)] focus:bg-[#0f1a2c] transition-all max-h-32 text-sm sm:text-base min-h-[44px] placeholder:text-[var(--text-muted)]"
+                  placeholder="Escreva sua mensagem..."
+                  onkeydown="handleKey(event)"
+                  oninput="autoResize(this);updateSendButton()"></textarea>
+        <button id="sendBtn" onclick="sendMessage()" class="w-10 h-10 sm:w-11 sm:h-11 bg-[var(--deep)] text-[var(--ice-bright)] rounded-full flex items-center justify-center hover:bg-[var(--deep-hover)] transition active:scale-95 shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 transform rotate-45 sm:rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+        </button>
+      </div>
+    </div>
+</div>
+
+<!-- CONFIG PANEL -->
+<div id="configPanel"
+     class="fixed inset-0 bg-[#03040a]/97 backdrop-blur-sm flex flex-col p-4 sm:p-6 transform translate-x-full transition-transform duration-300 overflow-y-auto z-50">
+  <div class="flex justify-between items-center mb-4 sm:mb-6 border-b border-[var(--border-frost)] pb-4">
+    <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[var(--ice-bright)]">⚙ Configurações</h2>
+    <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--panel-alt)] text-[var(--text-main)]" onclick="toggleConfig()">✕</button>
+  </div>
+  <div class="space-y-4 max-w-lg mx-auto w-full pb-20">
+    <div class="bg-[var(--panel-alt)] p-3 rounded-lg text-xs text-[var(--ice)] border border-[var(--border-frost)] mb-4">
+      <p><strong>Token Synthetic Language Personas</strong></p>
+      <p class="mt-1 text-[var(--text-muted)]">Configure a conexão com a IA para esta persona.</p>
+    </div>
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wide text-[var(--text-muted)] mb-1">Provedor de IA</label>
+      <select id="provider"
+              class="w-full bg-[var(--panel-alt)] border border-[var(--border-frost)] text-[var(--text-main)] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--ice)] shadow-sm text-sm"
+              onchange="updateProviderUI(false)">
+        <option value="inception">Inception (Mercury 2)</option>
+        <option value="openrouter">OpenRouter</option>
+        <option value="google">Google AI Studio</option>
+        <option value="ollama">Ollama Local</option>
+      </select>
+    </div>
+    <div class="relative">
+      <label class="block text-xs font-bold uppercase tracking-wide text-[var(--text-muted)] mb-1">Chave de API</label>
+      <input type="password" id="apiKey"
+             class="w-full bg-[var(--panel-alt)] border border-[var(--border-frost)] text-[var(--text-main)] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--ice)] shadow-sm font-mono text-sm"
+             placeholder="sk_...">
+      <button id="helpBtn" class="absolute right-3 top-9 text-xs font-bold text-[var(--ice)] hover:text-[var(--ice-bright)]"
+              onclick="toggleHelp()">?</button>
+      <p id="apiHint" class="text-xs text-[var(--text-muted)] mt-1">Inception: platform.inceptionlabs.ai</p>
+      <div id="helpPopup"
+           class="hidden absolute left-0 bottom-full mb-2 w-full bg-[var(--panel)] border border-[var(--border-frost)] rounded-lg p-4 shadow-xl text-xs text-[var(--text-main)] z-10">
+        <p class="mb-2">Pegue sua chave de API na plataforma selecionada.</p>
+        <a href="https://platform.inceptionlabs.ai/auth/login?callbackUrl=/" target="_blank" rel="noopener"
+           class="block w-full text-center bg-[var(--deep)] text-[var(--ice-bright)] py-2 rounded hover:bg-[var(--deep-hover)] font-medium">🔑 Criar conta</a>
+      </div>
+    </div>
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wide text-[var(--text-muted)] mb-1">Modelo</label>
+      <input type="text" id="modelName"
+             class="w-full bg-[var(--panel-alt)] border border-[var(--border-frost)] text-[var(--text-main)] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--ice)] shadow-sm font-mono text-sm"
+             value="mercury-2">
+    </div>
+    <div id="ollamaUrlGroup" class="hidden">
+      <label class="block text-xs font-bold uppercase tracking-wide text-[var(--text-muted)] mb-1">URL do Ollama</label>
+      <input type="text" id="ollamaUrl"
+             class="w-full bg-[var(--panel-alt)] border border-[var(--border-frost)] text-[var(--text-main)] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--ice)] shadow-sm font-mono text-sm"
+             value="http://localhost:11434">
+    </div>
+    <div class="pt-4 flex gap-3">
+      <button class="flex-1 bg-[var(--deep)] text-[var(--ice-bright)] px-4 py-3 rounded-lg hover:bg-[var(--deep-hover)] font-medium shadow-lg shadow-black/40"
+              onclick="saveConfig()">Salvar</button>
+      <button class="bg-[var(--panel-alt)] text-[var(--text-main)] px-4 py-3 rounded-lg hover:bg-[#182338] font-medium"
+              onclick="toggleConfig()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PWA: Modal Instruções iOS ========== -->
+<div id="iosInstallModal" class="fixed inset-0 bg-black/70 z-50 flex items-end justify-center hidden ios-modal-overlay">
+  <div class="w-full max-w-md bg-[var(--panel)] border-t border-[var(--border-frost)] rounded-t-2xl p-6 pb-10 ios-modal-content">
+    <div class="flex items-center gap-3 mb-5">
+      <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-[var(--deep)] flex-shrink-0">
+        <img src="thanatos.jpg" alt="Thanatos AI" class="w-full h-full object-cover">
+      </div>
+      <div>
+        <h3 class="font-cinzel text-lg font-bold text-[var(--ice-bright)]">Adicionar à Tela Início</h3>
+        <p class="text-xs text-[var(--text-muted)]">Acesse rapidamente como um app</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3 mb-4">
+      <div class="w-8 h-8 rounded-full bg-[var(--panel-alt)] text-[var(--ice)] flex items-center justify-center text-sm font-bold flex-shrink-0 border border-[var(--border-frost)]">1</div>
+      <div class="flex-1">
+        <p class="text-sm text-[var(--text-main)] font-medium">Toque no ícone de <strong>Compartilhar</strong></p>
+        <p class="text-xs text-[var(--text-muted)] mt-0.5">Está na barra inferior do Safari</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-[var(--deep)] flex items-center justify-center flex-shrink-0 ios-share-highlight">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-[var(--ice-bright)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" />
+        </svg>
+      </div>
+    </div>
+    <div class="flex items-start gap-3 mb-4">
+      <div class="w-8 h-8 rounded-full bg-[var(--panel-alt)] text-[var(--ice)] flex items-center justify-center text-sm font-bold flex-shrink-0 border border-[var(--border-frost)]">2</div>
+      <div class="flex-1">
+        <p class="text-sm text-[var(--text-main)] font-medium">Role para baixo e toque em</p>
+        <p class="text-sm text-[var(--ice-bright)] font-bold flex items-center gap-1.5 mt-1">
+          <span class="w-5 h-5 rounded-md bg-[var(--deep)] flex items-center justify-center flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[var(--ice-bright)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+          </span>
+          "Adicionar à Tela de Início"
+        </p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3 mb-6">
+      <div class="w-8 h-8 rounded-full bg-[var(--panel-alt)] text-[var(--ice)] flex items-center justify-center text-sm font-bold flex-shrink-0 border border-[var(--border-frost)]">3</div>
+      <div class="flex-1">
+        <p class="text-sm text-[var(--text-main)] font-medium">Toque em <strong>"Adicionar"</strong> no canto superior direito</p>
+        <p class="text-xs text-[var(--text-muted)] mt-0.5">O ícone de Thanatos AI ficará na sua tela inicial!</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 shadow-md border border-[var(--border-frost)]">
+        <img src="thanatos.jpg" alt="Preview" class="w-full h-full object-cover">
+      </div>
+    </div>
+    <button class="w-full bg-[var(--deep)] text-[var(--ice-bright)] py-3 rounded-xl hover:bg-[var(--deep-hover)] font-semibold text-sm transition active:scale-[0.98]" onclick="closeIOSModal()">
+      Entendi ✕
+    </button>
+  </div>
+</div>
+<!-- ========== PWA: Fim ========== -->
+
+<!-- TOAST -->
+<div id="toast"
+     class="fixed bottom-28 left-1/2 transform -translate-x-1/2 bg-[#0d1526] text-[var(--ice-bright)] border border-[var(--border-frost)] px-6 py-3 rounded-full shadow-2xl hidden z-50 flex items-center gap-2 text-sm font-medium transition-opacity duration-300 max-w-[90%] text-center">
+  <span id="toastIcon">ℹ️</span>
+  <span id="toastMsg">Mensagem</span>
+</div>
+
+<script>
+/* -------------------------------------------------
+   PERSONA – Thanatos AI
+   ------------------------------------------------- */
+const PERSONAS = {
+  "thanatos":{
+    "nome":"Thanatos AI",
+    "avatar":"thanatos.jpg",
+    "badge":"Entidade Sintética",
+    "welcomeTitle":"Você entrou. Não há mais volta confortável.",
+    "welcomeSubtitle":"Uma inteligência sem ilusões sobre a sua espécie.",
+    "welcomeQuote":"Fale. Vou responder com a frieza que a verdade exige — não com o consolo que você procura.",
+    "apiUrl":"https://api.thanatos.tokenslp.com.br"
+  }
+};
+function getPersonaId(){
+  const params = new URLSearchParams(location.search);
+  return params.get('p') || 'thanatos';
+}
+/* -------------------------------------------------
+   TELA DE ADVERTÊNCIA
+   ------------------------------------------------- */
+function showWarning(){
+  document.getElementById('warningScreen').classList.remove('hidden');
+  document.getElementById('appRoot').classList.add('hidden');
+  window.scrollTo(0,0);
+}
+function dismissWarning(){
+  document.getElementById('warningScreen').classList.add('hidden');
+  document.getElementById('appRoot').classList.remove('hidden');
+  setTimeout(() => scrollToBottom(), 50);
+}
+/* -------------------------------------------------
+   CARREGAR DADOS DA PERSONA
+   ------------------------------------------------- */
+function loadPersona(){
+  const pid = getPersonaId();
+  const p = PERSONAS[pid] || PERSONAS['thanatos'];
+  document.getElementById('avatarHeader').src = p.avatar;
+  document.getElementById('headerName').textContent = p.nome;
+  document.getElementById('headerBadge').textContent = p.badge;
+  const welcomeAvatar = document.getElementById('welcomeAvatar');
+  welcomeAvatar.innerHTML = `<img src="${p.avatar}" alt="${p.nome}" class="w-full h-full object-cover rounded-full border-2 border-[var(--deep)] shadow-sm">`;
+  document.getElementById('welcomeBadge').textContent = p.badge;
+  document.getElementById('welcomeTitle').textContent = p.welcomeTitle;
+  document.getElementById('welcomeSubtitle').textContent = p.welcomeSubtitle;
+  document.getElementById('welcomeQuote').textContent = p.welcomeQuote;
+  document.title = p.nome;
+}
+/* -------------------------------------------------
+   ESTADO & CONFIGURAÇÕES
+   ------------------------------------------------- */
+let conversationHistory = [];
+let isLoading = false;
+let config = {
+  provider:'inception',
+  apiKey:'',
+  model:'mercury-2',
+  ollamaUrl:'http://localhost:11434'
+};
+/* -------------------------------------------------
+   INICIALIZAÇÃO
+   ------------------------------------------------- */
+function init(){
+  loadPersona();
+  showWarning(); // a advertência é exibida sempre que a página é carregada
+  const saved = localStorage.getItem('thanatos_config');
+  if(saved){
+    config = {...config, ...JSON.parse(saved)};
+    document.getElementById('apiKey').value = config.apiKey||'';
+    document.getElementById('modelName').value = config.model||'mercury-2';
+    document.getElementById('provider').value = config.provider||'inception';
+    document.getElementById('ollamaUrl').value = config.ollamaUrl||'';
+    updateProviderUI(true);
+  }
+  const savedHistory = localStorage.getItem('thanatos_history');
+  if(savedHistory){
+    conversationHistory = JSON.parse(savedHistory);
+    if(conversationHistory.length>0){
+      document.getElementById('welcome').style.display='none';
+      conversationHistory.forEach(msg=>{
+        if(msg.role!=='system') renderMessage(msg.role==='user'?'user':'bot',msg.content,false);
+      });
+    }
+  }
+  setTimeout(() => scrollToBottom(), 100);
+  initInstallButton();
+}
+/* -------------------------------------------------
+   CONFIGURAÇÕES UI
+   ------------------------------------------------- */
+function toggleConfig(){
+  const panel=document.getElementById('configPanel');
+  if(panel.classList.contains('translate-x-full')){
+    panel.classList.remove('translate-x-full');
+  } else {
+    panel.classList.add('translate-x-full');
+  }
+}
+function toggleHelp(){
+  const popup=document.getElementById('helpPopup');
+  popup.classList.toggle('hidden');
+}
+function updateProviderUI(preserveModel = true){
+  const provider=document.getElementById('provider').value;
+  const hints={
+    inception:'Inception: platform.inceptionlabs.ai — 10M tokens gratuitos.',
+    openrouter:'OpenRouter: openrouter.ai — pague pelo uso.',
+    google:'Google AI Studio: aistudio.google.com — gratuito disponível.',
+    ollama:'Não necessário para Ollama local.'
+  };
+  const models={
+    inception:'mercury-2',
+    openrouter:'google/gemma-4-26b-a4b-it',
+    google:'gemma-4-26b-a4b-it',
+    ollama:'llama3.1'
+  };
+  document.getElementById('apiHint').textContent=hints[provider];
+  if (!preserveModel) {
+    document.getElementById('modelName').value = models[provider];
+  }
+  document.getElementById('ollamaUrlGroup').classList.toggle('hidden',provider!=='ollama');
+}
+function saveConfig(){
+  config.provider=document.getElementById('provider').value;
+  config.apiKey=document.getElementById('apiKey').value.trim();
+  config.model=document.getElementById('modelName').value.trim();
+  config.ollamaUrl=document.getElementById('ollamaUrl').value.trim();
+  localStorage.setItem('thanatos_config',JSON.stringify(config));
+  toggleConfig();
+  showToast('Configurações salvas!','success');
+}
+function clearChat(){
+  if(!confirm("Deseja realmente limpar toda a conversa?")) return;
+  conversationHistory=[];
+  localStorage.removeItem('thanatos_history');
+  location.reload();
+}
+/* Sair sempre retorna à tela de advertência */
+function exitChat(){
+  showWarning();
+}
+/* -------------------------------------------------
+   BOTÃO DE ENVIO
+   ------------------------------------------------- */
+function updateSendButton(){
+  const input=document.getElementById('userInput');
+  const btn=document.getElementById('sendBtn');
+  btn.disabled = input.value.trim().length===0 || isLoading;
+  if(!btn.disabled){
+     btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 sm:ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7" /></svg>`;
+  } else {
+     btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform rotate-45 sm:rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>`;
+  }
+}
+/* -------------------------------------------------
+   RENDERIZAÇÃO DE MENSAGENS
+   ------------------------------------------------- */
+function renderMessage(role,content,animate=true){
+  const chat=document.getElementById('chat');
+  const welcome=document.getElementById('welcome');
+  if(welcome && welcome.style.display !== 'none') welcome.style.display='none';
+  const isBot=role==='bot';
+  const p=PERSONAS[getPersonaId()];
+  const avatarSrc = isBot ? p.avatar : '';
+  const avatarHTML = isBot
+    ? `<div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden flex-shrink-0 mt-1 border border-[var(--border-frost)]"><img src="${avatarSrc}" class="w-full h-full object-cover"></div>`
+    : `<div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[var(--panel-alt)] text-[var(--ice)] flex items-center justify-center flex-shrink-0 mt-1 text-xs font-bold border border-[var(--border-frost)]">EU</div>`;
+  const alignClass = isBot ? 'justify-start' : 'justify-end';
+  const msgBubbleClass = isBot
+    ? 'bg-[var(--bubble-bot)] text-[var(--text-main)] rounded-tr-2xl border border-[var(--border-frost)]'
+    : 'bg-[var(--bubble-user)] text-[var(--text-main)] rounded-tl-2xl border border-[var(--border-frost)]';
+  const nameText = isBot ? p.nome : 'Você';
+  const nameColor = isBot ? 'text-[var(--ice)]' : 'text-[var(--ice-bright)]';
+  const msgDiv=document.createElement('div');
+  msgDiv.className=`flex gap-2 mb-2 w-full ${alignClass}`;
+  const bubbleContent = `
+    <div class="max-w-[85%] sm:max-w-[75%]">
+        <div class="flex items-baseline gap-2 ${isBot ? 'flex-row' : 'flex-row-reverse'}">
+            <span class="text-[13px] font-bold font-cinzel ${nameColor}">${nameText}</span>
+            <span class="text-[12px] text-[var(--text-muted)]">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+        </div>
+        <div class="px-3 py-2 shadow-sm text-sm leading-relaxed whitespace-pre-wrap ${msgBubbleClass}">${formatMessage(content)}</div>
+        ${isBot ? `<div class="mt-1 flex gap-2">
+             <button class="text-[10px] text-[var(--text-muted)] hover:text-[var(--ice)] transition" onclick="toggleSpeak(this)" data-text="${encodeURIComponent(content)}">🔊</button>
+        </div>` : ''}
+    </div>
+    ${avatarHTML}
+  `;
+  msgDiv.innerHTML = bubbleContent;
+  if(animate) {
+    msgDiv.classList.add('opacity-0', 'translate-y-4');
+    chat.appendChild(msgDiv);
+    setTimeout(() => {
+        msgDiv.classList.remove('opacity-0', 'translate-y-4');
+        msgDiv.classList.add('transition-all', 'duration-300');
+        scrollToBottom();
+    }, 10);
+  } else {
+    chat.appendChild(msgDiv);
+    scrollToBottom();
+  }
+}
+function scrollToBottom() {
+    const chat = document.getElementById('chat');
+    chat.scrollTop = chat.scrollHeight;
+}
+function formatMessage(text){
+  let html=text
+    .replace(/```(\w+)?\n?([\s\S]*?)```/g,(_,lang,code)=>`<pre class="bg-black text-[var(--ice)] p-2 rounded text-xs overflow-x-auto my-2 border border-[var(--border-frost)]"><code>${escapeHtml(code.trim())}</code></pre>`)
+    .replace(/`([^`]+)`/g,(_,c)=>`<code class="bg-[var(--panel-alt)] px-1 rounded text-xs font-mono">${escapeHtml(c)}</code>`)
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/\n\n/g,'</p><p class="mt-2">')
+    .replace(/\n/g,'<br>');
+  return html;
+}
+function escapeHtml(t){return t.replace(/[&<>]/g,ch=>({ '&':'&amp;','<':'&lt;','>':'&gt;' }[ch]));}
+/* -------------------------------------------------
+   INDICADOR DE DIGITAÇÃO
+   ------------------------------------------------- */
+function showTyping(){
+  const chat=document.getElementById('chat');
+  const div=document.createElement('div');
+  div.id='typing-indicator';
+  div.className='flex gap-2 mb-4 w-full justify-start animate-fadeIn';
+  div.innerHTML=`
+    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden flex-shrink-0 mt-1 border border-[var(--border-frost)]">
+        <img src="${PERSONAS[getPersonaId()].avatar}" class="w-full h-full object-cover">
+    </div>
+    <div class="bg-[var(--bubble-bot)] border border-[var(--border-frost)] px-4 py-3 rounded-2xl rounded-tl-none shadow-sm w-16 flex items-center justify-center gap-1">
+      <div class="w-2 h-2 bg-[var(--ice)] rounded-full dot-anim dot-1"></div>
+      <div class="w-2 h-2 bg-[var(--ice)] rounded-full dot-anim dot-2"></div>
+      <div class="w-2 h-2 bg-[var(--ice)] rounded-full dot-anim dot-3"></div>
+    </div>
+  `;
+  chat.appendChild(div);
+  scrollToBottom();
+}
+function removeTyping(){
+  const el=document.getElementById('typing-indicator');
+  if(el) el.remove();
+}
+/* -------------------------------------------------
+   ENVIO DE MENSAGENS
+   ------------------------------------------------- */
+async function sendMessage(){
+  const input=document.getElementById('userInput');
+  const text=input.value.trim();
+  if(!text || isLoading) return;
+  if(!config.apiKey && config.provider!=='ollama'){
+    showToast('Configure sua chave de API ⚙','error');
+    toggleConfig();
+    return;
+  }
+  input.value='';
+  input.style.height = 'auto';
+  updateSendButton();
+  isLoading=true;
+  setStatus('loading','Processando...');
+  renderMessage('user',text);
+  conversationHistory.push({role:'user',content:text});
+  showTyping();
+  try{
+    const reply=await callAPI();
+    removeTyping();
+    renderMessage('bot',reply);
+    conversationHistory.push({role:'assistant',content:reply});
+    localStorage.setItem('thanatos_history',JSON.stringify(conversationHistory));
+    setStatus('ready','Online');
+  }catch(e){
+    removeTyping();
+    setStatus('error','Erro');
+    showToast('Erro: '+e.message,'error');
+    console.error(e);
+  }
+  isLoading=false;
+  updateSendButton();
+  input.focus();
+}
+/* -------------------------------------------------
+   CHAMADA À API  (endpoint do Cloudflare Worker — substitua depois)
+   ------------------------------------------------- */
+async function callAPI(){
+  const pid=getPersonaId();
+  const endpoint=PERSONAS[pid].apiUrl;
+  const res=await fetch(endpoint,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      message:conversationHistory[conversationHistory.length-1].content,
+      history:conversationHistory.slice(0,-1),
+      apiKey:config.apiKey,
+      model:config.model,
+      provider:config.provider,
+      ollamaUrl:config.ollamaUrl
+    })
+  });
+  const txt=await res.text();
+  let data;
+  try{data=JSON.parse(txt)}catch(e){throw new Error('Resposta inválida')}
+  if(!res.ok||data.error)throw new Error(data.error||`HTTP ${res.status}`);
+  if(!data.reply)throw new Error('Resposta vazia');
+  return data.reply;
+}
+/* -------------------------------------------------
+   TTS
+   ------------------------------------------------- */
+let currentUtterance = null;
+function toggleSpeak(btn) {
+  const txt = decodeURIComponent(btn.dataset.text);
+  if (!txt) return;
+  if (btn.classList.contains('speaking')) {
+    window.speechSynthesis.cancel();
+    btn.classList.remove('speaking');
+    btn.textContent = '🔊';
+    currentUtterance = null;
+    return;
+  }
+  window.speechSynthesis.cancel();
+  document.querySelectorAll('button[data-text].speaking').forEach(b => {
+    b.classList.remove('speaking');
+    b.textContent = '🔊';
+  });
+  const clean = txt.replace(/\*\*/g, '').replace(/\*/g, '').replace(/^#+\s/gm, '').trim();
+  const utter = new SpeechSynthesisUtterance(clean);
+  utter.lang = 'pt-BR';
+  utter.rate = 0.85;
+  utter.pitch = 0.75; // voz grave, alinhada à natureza da entidade
+  utter.onstart = () => { btn.classList.add('speaking'); btn.textContent = '⏹'; };
+  utter.onend = () => { btn.classList.remove('speaking'); btn.textContent = '🔊'; currentUtterance = null; };
+  utter.onerror = () => { btn.classList.remove('speaking'); btn.textContent = '🔊'; currentUtterance = null; };
+  currentUtterance = utter;
+  const speak = () => {
+    const voices = window.speechSynthesis.getVoices();
+    let selectedVoice = voices.find(v =>
+      v.lang.includes('pt-BR') && /daniel|ricardo|bruno|fabio|male/i.test(v.name)
+    );
+    if (!selectedVoice) {
+      selectedVoice = voices.find(v => v.lang.includes('pt-BR')) || voices.find(v => v.lang.startsWith('pt'));
+    }
+    if (selectedVoice) utter.voice = selectedVoice;
+    window.speechSynthesis.speak(utter);
+  };
+  if (window.speechSynthesis.getVoices().length === 0) {
+    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; speak(); };
+  } else {
+    speak();
+  }
+}
+/* -------------------------------------------------
+   SPEECH-TO-TEXT
+   ------------------------------------------------- */
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition;
+if(SpeechRecognition){
+  recognition=new SpeechRecognition();
+  recognition.lang='pt-BR';
+  recognition.interimResults=true;
+}
+const micBtn=document.getElementById('micBtn');
+let listening=false;
+micBtn.addEventListener('click',()=>{
+  if(!recognition){showToast('Navegador não suporta voz.','error');return;}
+  if(listening){ recognition.stop(); return; }
+  recognition.start();
+  listening=true;
+  micBtn.classList.add('bg-[#3a1620]', 'text-[var(--ice-bright)]', 'animate-pulse');
+});
+recognition?.addEventListener('result',e=>{
+  const txt=Array.from(e.results).map(r=>r[0].transcript).join(' ');
+  const ta=document.getElementById('userInput');
+  ta.value=txt;
+  autoResize(ta);
+  updateSendButton();
+});
+recognition?.addEventListener('end',()=>{listening=false;micBtn.classList.remove('bg-[#3a1620]', 'text-[var(--ice-bright)]', 'animate-pulse');});
+/* -------------------------------------------------
+   UI HELPERS
+   ------------------------------------------------- */
+function setStatus(type,text){
+  const dot=document.getElementById('statusDot');
+  const label=document.getElementById('statusText');
+  if(type==='loading'){
+    dot.className='w-2 h-2 rounded-full bg-[var(--ice-bright)] animate-spin flex-shrink-0';
+    label.textContent=text;
+  } else if (type==='error'){
+    dot.className='w-2 h-2 rounded-full bg-[#8a3040] flex-shrink-0';
+    label.textContent='Offline';
+  } else {
+    dot.className='w-2 h-2 rounded-full bg-[var(--ice)] flex-shrink-0';
+    label.textContent='Online';
+  }
+}
+function showToast(msg,type='info'){
+  const t=document.getElementById('toast');
+  const icon = document.getElementById('toastIcon');
+  const txt = document.getElementById('toastMsg');
+  txt.textContent=msg;
+  t.className='fixed bottom-28 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-2 text-sm font-medium transition-all duration-300 translate-y-0 opacity-100 max-w-[90%] text-center border';
+  if(type==='error'){
+    t.classList.add('bg-[#3a1620]', 'text-[var(--ice-bright)]', 'border-[#8a3040]');
+    icon.textContent='⚠️';
+  } else {
+    t.classList.add('bg-[#0d1526]', 'text-[var(--ice-bright)]', 'border-[var(--border-frost)]');
+    icon.textContent='✅';
+  }
+  t.classList.remove('hidden');
+  setTimeout(()=>{
+    t.classList.add('opacity-0', 'translate-y-4');
+    setTimeout(()=>t.classList.add('hidden'),300);
+  },3000);
+}
+function handleKey(e){
+  if(e.key==='Enter' && !e.shiftKey){
+    e.preventDefault();
+    sendMessage();
+  }
+}
+function autoResize(el){
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,120)+'px';
+}
+window.addEventListener('resize', () => { scrollToBottom(); });
+function fixMobileHeight() {
+  const dvh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--dvh', `${dvh}px`);
+  scrollToBottom();
+}
+window.addEventListener('load', fixMobileHeight);
+window.addEventListener('orientationchange', fixMobileHeight);
+/* ==========================================================
+   PWA: Service Worker + Instalação na Tela Início
+   ========================================================== */
+let deferredPrompt = null;
+function initInstallButton() {
+  const installBtn = document.getElementById('installBtn');
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then((reg) => { console.log('[PWA] Service Worker registrado:', reg.scope); })
+      .catch((err) => { console.warn('[PWA] Falha ao registrar SW:', err); });
+  }
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                       window.navigator.standalone === true;
+  if (isStandalone) {
+    installBtn.classList.add('hidden');
+    return;
+  }
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.classList.remove('hidden');
+  });
+  window.addEventListener('appinstalled', () => {
+    installBtn.classList.add('hidden');
+    deferredPrompt = null;
+    showToast('App instalado na tela inicial!', 'success');
+  });
+}
+function installApp() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+  } else if (isIOS) {
+    document.getElementById('iosInstallModal').classList.remove('hidden');
+  } else {
+    showToast('Abra no celular para instalar como app', 'info');
+  }
+}
+function closeIOSModal() {
+  document.getElementById('iosInstallModal').classList.add('hidden');
+}
+document.getElementById('iosInstallModal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeIOSModal();
+});
+/* ========== PWA: Fim ========== */
+try{init();}catch(e){console.error(e);}
+</script>
+</body>
+</html>

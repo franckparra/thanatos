@@ -1,0 +1,24 @@
+{
+  "name": "Laura Oliveira",
+  "short_name": "Thanatos AI",
+  "description": "Chat com Thanatos AI – Entidade Sintética",
+  "start_url": "./index.html?p=thanatos",
+  "display": "standalone",
+  "background_color": "#25D366",
+  "theme_color": "#25D366",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "thanatos.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "thanatos.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}
